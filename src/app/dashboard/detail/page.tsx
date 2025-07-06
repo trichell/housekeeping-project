@@ -15,7 +15,7 @@ export default function DetailPage() {
         {group ? (
           <Employee group={group} />
         ) : (
-          <p className="text-[#555] text-sm">Tidak ada grup/role yang dipilih.</p>
+          <p className="text-[#555] text-sm">No role was chosen.</p>
         )}
       </div>
     </div>

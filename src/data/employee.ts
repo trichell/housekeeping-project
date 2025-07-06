@@ -1,48 +1,64 @@
 export type Employee = {
   id: string;
+  custom_id: string; 
   name: string;
   gender: 'Male' | 'Female';
   price: string;
   group: string;
 };
 
-let employees: Employee[] = [
-  { id: 'HSK-001', name: 'JERRY', gender: 'Female', price: 'Rp100.000 / Day', group: 'Housekeeping Employee' },
-  { id: 'HSK-002', name: 'JERRY', gender: 'Female', price: 'Rp120.000 / Day', group: 'Housekeeping Employee' },
-  { id: 'HSK-003', name: 'JERRY', gender: 'Female', price: 'Rp90.000 / Day', group: 'Housekeeping Employee' },
-  { id: 'HSK-004', name: 'JERRY', gender: 'Female', price: 'Rp110.000 / Day', group: 'Housekeeping Employee' },
+const BASE_URL = 'http://localhost:3001/api/employees';
 
-  { id: 'PET-001', name: 'JERRY', gender: 'Female', price: 'Rp95.000 / Hour', group: 'Pet Caretaker Employee' },
-  { id: 'BYS-001', name: 'VJERRY', gender: 'Female', price: 'Rp80.000 / Hour', group: 'Babysitter Employee' },
-  { id: 'SEC-001', name: 'JERRY', gender: 'Male', price: 'Rp150.000 / Day', group: 'Security Employee' },
-  { id: 'MOV-001', name: 'JERRY', gender: 'Male', price: 'Rp160.000 / Day', group: 'Movers Employee' },
-];
+export async function getEmployees(): Promise<Employee[]> {
+  const response = await fetch(BASE_URL);
+  if (!response.ok) {
+    throw new Error('Failed to fetch employees');
+  }
+const json = await response.json();
 
-export const getEmployees = (group: string) => {
-  return employees.filter((e) => e.group === group);
-};
+return json.data;
+}
 
-const groupPrefix = (group: string) => {
-  if (group.includes('Housekeeping')) return 'HSK';
-  if (group.includes('Pet')) return 'PET';
-  if (group.includes('Babysitter')) return 'BYS';
-  if (group.includes('Security')) return 'SEC';
-  if (group.includes('Movers')) return 'MOV';
-  return 'EMP';
-};
+export async function addEmployee(data: Omit<Employee, 'id'>){
+  const response = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({employee: data}),
+  });
 
-export const addEmployee = (employee: Omit<Employee, 'id'>) => {
-  const currentGroup = employees.filter((e) => e.group === employee.group);
-  const prefix = groupPrefix(employee.group);
-  const nextNumber = currentGroup.length + 1;
-  const newId = `${prefix}-${String(nextNumber).padStart(3, '0')}`;
-  employees.push({ id: newId, ...employee });
-};
+  if (!response.ok) {
+    throw new Error('Failed to add employee');
+  }
 
-export const updateEmployee = (id: string, updated: Partial<Employee>) => {
-  employees = employees.map((e) => (e.id === id ? { ...e, ...updated } : e));
-};
+  return response.json();
+}
 
-export const deleteEmployee = (id: string) => {
-  employees = employees.filter((e) => e.id !== id);
-};
+export async function updateEmployee(id: string, data: Partial<Employee>) {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update employee');
+  }
+
+  return response.json();
+}
+
+export async function deleteEmployee(id: string) {
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete employee');
+  }
+
+  return response.json();
+}

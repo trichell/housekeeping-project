@@ -1,7 +1,9 @@
 'use client';
 
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Snackbar from '@/components/Snackbar';
 import {
   getEmployees,
   addEmployee,
@@ -12,6 +14,8 @@ import {
 
 export default function Employee({ group }: { group: string }) {
   const router = useRouter();
+  const [SnackbarMessage, setSnackbarMessage] = useState('');
+  const [SnackbarVisible, setSnackbarVisible] = useState(false);
 
   const [list, setList] = useState<EmployeeType[]>([]);
   const [name, setName] = useState('');
@@ -19,44 +23,71 @@ export default function Employee({ group }: { group: string }) {
   const [price, setPrice] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const refresh = () => setList(getEmployees(group));
+  const refresh = async () => {
+    const data = await getEmployees();
+    const filteredData = data.filter((e) => e.group === group);
+    setList(filteredData);
+  };
 
   useEffect(() => {
-    refresh();
-  }, [group]);
+    const fetchData = async () => {
+      const data = await getEmployees();
+      const filteredData = data.filter((e) => e.group === group);
+      setList(filteredData);
+  };
+  fetchData();
+}, [group]);
 
-  const handleSave = () => {
-    if (!name.trim() || !price.trim()) return;
-
-    const data = {
-      name,
-      gender,
-      price,
-      group,
-    };
-
-    if (editingId !== null) {
-      updateEmployee(editingId, data);
-    } else {
-      addEmployee(data);
+  const handleSave = async () => {
+      if (!name.trim() || !price.trim()) {
+        setSnackbarMessage('Name and Price cannot be empty');
+        setSnackbarVisible(true);
+        return;
+      }
+    try {
+      const data = {
+        name,gender,price,group };
+      if (editingId !== null) {
+        await updateEmployee(editingId, data);
+        setSnackbarMessage('Edited employee:  ' + name);
+      } else {
+        await addEmployee(data);
+        setSnackbarMessage('Added employee:  ' + name);
+      }
+      setSnackbarVisible(true);
+      setName('');
+      setGender('Male');
+      setPrice('');
+      setEditingId(null);
+      await refresh();
+      } catch (error) {
+      setSnackbarMessage('An error occurred while saving the employee');
+      setSnackbarVisible(true);
     }
-
-    setName('');
-    setGender('Male');
-    setPrice('');
-    setEditingId(null);
-    refresh();
   };
 
   const handleEdit = (e: EmployeeType) => {
+   
     setName(e.name);
     setGender(e.gender);
     setPrice(e.price);
     setEditingId(e.id);
-  };
+    
+    setSnackbarMessage('Editing employee: ' + e.name);
+    setSnackbarVisible(true);
+    };
 
-  const handleDelete = (id: string) => {
-    deleteEmployee(id);
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteEmployee(id);
+      setSnackbarMessage('deleted employee with ID: ' + id);
+      setSnackbarVisible(true);
+    } catch (error) {
+      setSnackbarMessage('An error occurred while deleting the employee');
+      setSnackbarVisible(true);
+    }
+      
     refresh();
   };
 
@@ -110,7 +141,7 @@ export default function Employee({ group }: { group: string }) {
           >
             <div>
               <p className="font-bold text-[#C54B8C]">{e.name}</p>
-              <p className="text-sm text-[#8a2a64]">ID: {e.id} • Gender: {e.gender}</p>
+              <p className="text-sm text-[#8a2a64]">ID: {e.custom_id} • Gender: {e.gender}</p>
               <p className="text-sm italic text-[#8a2a64]">Price: {e.price}</p>
             </div>
             <div className="flex gap-2">
@@ -130,6 +161,12 @@ export default function Employee({ group }: { group: string }) {
           </li>
         ))}
       </ul>
+      <Snackbar
+        message={SnackbarMessage}
+        visible={SnackbarVisible}
+        onClose={() => setSnackbarVisible(false)}
+      />
     </div>
   );
-}
+  }
+

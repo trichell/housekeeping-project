@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const menu = [
   {
@@ -135,7 +136,7 @@ const menu = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>('housekeeper');
 
   const toggleContent = (key: string) => {
     setActiveKey((prev) => (prev === key ? null : key));
@@ -147,8 +148,8 @@ export default function DashboardPage() {
         <h1 className="text-5xl font-bold text-[#C54B8C]">Housekeeping</h1>
         <button
           onClick={() => {
-          localStorage.clear(); // Bisa juga pakai clear() untuk hapus semua data lokal jika perlu
-          router.replace('/login'); // ⬅️ Langsung redirect ke halaman login
+          localStorage.clear(); 
+          router.replace('/login'); 
         }}
       className="bg-[#C54B8C] text-white px-4 py-2 rounded hover:bg-pink-600 transition-all duration-300"
     >
@@ -179,10 +180,17 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <AnimatePresence mode ="wait">
         {menu.map((item) =>
-          activeKey === item.key ? (
-            <div key={item.key} className="space-y-4 transition-all duration-300 mb-6">
+          activeKey === item.key && (
+            <motion.div
+              key={item.key}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
               {item.submenu?.map((entry: any) => (
                 <div
                   key={entry.id || entry.nama}
@@ -228,17 +236,18 @@ export default function DashboardPage() {
                   )}
                 </div>
               ))}
-            </div>
-          ) : null
+            </motion.div>
+          )
         )}
+      </AnimatePresence>
         <footer className="mt-16 border-t border-[#C54B8C] pt-6 text-center text-sm text-[#C54B8C]">
-        <p className="font-semibold mb-1">Hubungi Kami</p>
-        <p>Wa: 0852-XXXX-XXXX • Ig: @housekeeping_ • Email: housekeeping@email.com</p>
+        <p className="font-semibold mb-1">Contact Us</p>
+        <p>Wa: 0852-XXXX-XXXX • Ig: @housekeeping_ • Email: housekeeping@gmail.com</p>
         <p className="mt-2 text-xs text-[#C54B8C]/70">
             &copy; {new Date().getFullYear()} Housekeeping Services. All rights reserved.
         </p>
       </footer>
     </div>
-   </div>
+   
   );
 }

@@ -12,22 +12,36 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
  
   const handleLogin = async () => {
-    const presetEmail = 'nadya@email.com';
-    const presetPassword = '123456';
-
     if (!email || !password) {
-      setError('Email dan password wajib diisi.');
+      setError('Email and password cannot be empty.');
       return;
     }
 
-    if (email === presetEmail && password === presetPassword) {
-      localStorage.setItem('token', 'fake-jwt-token');
-      router.push('/dashboard');
-    } else {
-      setError('Email atau password salah.');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        router.push('/dashboard');
+      } else {
+        setError(data.message || 'Login failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An error occurred while logging in. Please try again later.');
+    } finally {
+      setLoading(false);
     }
   };
- 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#F6D9EE] to-[#F3C78D]">
       <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
@@ -58,16 +72,16 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full bg-[#C54B8C] text-white font-bold py-3 rounded hover:bg-[#D0748B] disabled:opacity-60"
         >
-          {loading ? 'Loading...' : 'Masuk'}
+          {loading ? 'Loading...' : 'Enter'}
         </button>
 
         <p className="text-center text-sm mt-6 text-black">
-          Belum punya akun?{' '}
+          Dont have an account yet?{' '}
           <a
             href="/register"
             className="text-black-600 font-semibold hover:underline"
           >
-            Daftar di sini
+            Sign up here
           </a>
         </p>
       </div>
