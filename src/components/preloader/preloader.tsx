@@ -16,7 +16,7 @@ export default function Preloader() {
 
     return (
         <div className="fixed inset-0 bg-white flex flex-col items-center justify-center text-[#C54B8C] z-50">
-            <Image src="/image/logohk.png" alt="Logo" width={439} height={439} />
+            <Image src="/image/logohk1.png" alt="Logo" width={439} height={439} />
             <div className="mt-4 text-x1 font-bold">Loading{dots}</div>
             </div>
     );
