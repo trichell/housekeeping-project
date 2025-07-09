@@ -144,8 +144,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F6D9EE] to-[#F3C78D] px-6 py-10">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-5xl font-bold text-[#C54B8C]">Housekeeping</h1>
+<div className="flex items-center justify-between mb-6 flex-wrap">
+
+        <div className="flex items-center gap-6">
+          <img src="/image/logohk.png" alt="Housekeeping Logo" className="h-[72px] w-auto object-contain" />
+        <h1 className="text-[48px] font-bold text-[#C54B8C] leading-none">Housekeeping</h1>
+              </div>
+
         <button
           onClick={() => {
           localStorage.clear(); 
@@ -201,7 +206,7 @@ export default function DashboardPage() {
                       <span className="font-medium">{entry.nama}</span>
                      <button
                         onClick={() =>
-                          router.push(`/dashboard/detail?role=${encodeURIComponent(entry.nama)}`)
+                          router.push(/dashboard/detail?role=${encodeURIComponent(entry.nama)})
                         }
                         className="text-sm bg-[#C54B8C] text-white px-4 py-1 rounded hover:bg-[#a33a77] transition"
                     > 
