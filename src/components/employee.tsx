@@ -3,170 +3,117 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Snackbar from '@/components/Snackbar';
-import {
-  getEmployees,
-  addEmployee,
-  updateEmployee,
-  deleteEmployee,
-  Employee as EmployeeType,
-} from '../data/employee';
+
+type Props = {
+  group: string;
+};
+
+type EmployeeType = {
+  id: string;
+  custom_id: string;
+  name: string;
+  gender:'Male' | 'Female';
+  price: string;
+  group: string;
+};
 
 export default function Employee({ group }: { group: string }) {
   const router = useRouter();
-  const [SnackbarMessage, setSnackbarMessage] = useState('');
-  const [SnackbarVisible, setSnackbarVisible] = useState(false);
-
   const [list, setList] = useState<EmployeeType[]>([]);
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<'Male' | 'Female'>('Male');
-  const [price, setPrice] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const refresh = async () => {
-    const data = await getEmployees();
-    const filteredData = data.filter((e) => e.group === group);
-    setList(filteredData);
-  };
+  const [searchText, setSearchText] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getEmployees();
-      const filteredData = data.filter((e) => e.group === group);
-      setList(filteredData);
-  };
-  fetchData();
-}, [group]);
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/api/employees?group=${encodeURIComponent(group)}`);
+        const data = await res.json();
+        console.log('Fetched from API:', data);
+        console.log('Group:', group);
 
-  const handleSave = async () => {
-      if (!name.trim() || !price.trim()) {
-        setSnackbarMessage('Name and Price cannot be empty');
-        setSnackbarVisible(true);
-        return;
-      }
-    try {
-      const data = {
-        name,gender,price,group };
-      if (editingId !== null) {
-        await updateEmployee(editingId, data);
-        setSnackbarMessage('Edited employee:  ' + name);
-      } else {
-        await addEmployee(data);
-        setSnackbarMessage('Added employee:  ' + name);
-      }
-      setSnackbarVisible(true);
-      setName('');
-      setGender('Male');
-      setPrice('');
-      setEditingId(null);
-      await refresh();
+        setList(data.data || []);
       } catch (error) {
-      setSnackbarMessage('An error occurred while saving the employee');
-      setSnackbarVisible(true);
-    }
-  };
-
-  const handleEdit = (e: EmployeeType) => {
-   
-    setName(e.name);
-    setGender(e.gender);
-    setPrice(e.price);
-    setEditingId(e.id);
-    
-    setSnackbarMessage('Editing employee: ' + e.name);
-    setSnackbarVisible(true);
+        console.error('Error fetching employees:', error);
+      }
     };
 
+    fetchEmployees();
+  }, [group]);
   
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteEmployee(id);
-      setSnackbarMessage('deleted employee with ID: ' + id);
-      setSnackbarVisible(true);
-    } catch (error) {
-      setSnackbarMessage('An error occurred while deleting the employee');
-      setSnackbarVisible(true);
-    }
-      
-    refresh();
-  };
+  const filtered = list.filter((e) =>
+    e.name.toLowerCase().startsWith(searchText.toLowerCase())
+  );
+
+
 
   return (
     <div className="space-y-6">
       <button
         onClick={() => router.push('/dashboard')}
-        className="text-sm bg-[#C54B8C] text-white px-4 py-2 rounded hover:bg-pink-600 transition-all"
+        className="text-sm bg-[#C54B8C] text-white px-4 py-2 rounded hover:bg-pink-600 transition"
       >
-        ← back
+        ← Back to Dashboard
       </button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:items-end">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
-          className="border px-3 py-2 rounded text-black"
-        />
-        <select
-          value={gender}
-          onChange={(e) => setGender(e.target.value as 'Male' | 'Female')}
-          className="border px-3 py-2 rounded text-black"
-        >
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
-        <input
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="Price"
-          className="border px-3 py-2 rounded text-black"
-        />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 relative">
+        <div className="relative w-full sm:w-auto flex-1">
+          <input
+          value={searchText}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+          placeholder={`${group} data search`}
+          className="w-full border px-4 py-2 rounded text-black shadow-sm"
+          />
+          {searchText && showDropdown && filtered.length > 0 && (
+            <ul className="absolute z-10 w-full bg-white/90 border border-[#C54B8C] mt-1 rounded shadow-md max-h-48 overflow-y-auto backdrop-blur-sm">
+              {filtered.map((e) => (
+                <li
+                  key={e.custom_id}
+                    className="px-4 py-2  text-black hover:bg-[#C54B8C] hover:text-white cursor-pointer transition"
+                    onClick={() => 
+                      setSearchText(e.name)}
+                      >
+                      {e.name}
+                      </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <button
-          onClick={handleSave}
-          className={`text-white px-4 py-2 rounded font-semibold ${
-            editingId
-              ? 'bg-yellow-500 hover:bg-yellow-600'
-              : 'bg-[#C54B8C] hover:bg-[#a33a77]'
-          }`}
-        >
-          {editingId ? 'Save' : 'Add'}
-        </button>
+          onClick={() => router.push(`/addemployee?group=${encodeURIComponent(group)}&mode=add`)}
+          className="bg-[#C54B8C] text-white px-4 py-2 rounded hover:bg-pink-600 transition"
+          > 
+
+          + Add Data
+          </button>
       </div>
 
       <ul className="space-y-3">
-        {list.map((e) => (
-          <li
-            key={e.id}
-            className="flex justify-between items-center bg-white px-4 py-3 rounded-md border border-[#C54B8C] shadow-sm"
-          >
-            <div>
+        {(searchText ? filtered : list).length > 0 ? (
+          (searchText ? filtered : list).map((e) => (
+            <li
+              key={e.custom_id}
+              className="bg-white px-4 py-3 rounded-md border border-[#C54B8C] shadow-sm"
+            >
               <p className="font-bold text-[#C54B8C]">{e.name}</p>
-              <p className="text-sm text-[#8a2a64]">ID: {e.custom_id} • Gender: {e.gender}</p>
+              <p className="text-sm text-[#8a2a64]">
+                ID: {e.custom_id} | Gender: {e.gender}
+                </p>
               <p className="text-sm italic text-[#8a2a64]">Price: {e.price}</p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(e)}
-                className="text-xs bg-pink-400 text-white px-3 py-1 rounded hover:bg-pink-500"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(e.id)}
-                className="text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <Snackbar
-        message={SnackbarMessage}
-        visible={SnackbarVisible}
-        onClose={() => setSnackbarVisible(false)}
-      />
-    </div>
-  );
-  }
+              </li>
+          ))
+        ) : (
+          <p className='text-sm italic text-[#8a2a64]'>
+            {searchText ? 'No results found.' : 'No data yet.'}
 
+          </p>
+        )}
+      </ul>
+      </div>
+  );
+}

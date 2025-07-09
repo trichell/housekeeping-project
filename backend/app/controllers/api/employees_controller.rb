@@ -5,9 +5,14 @@ class EmployeesController < ApplicationController
   # GET /employees
   # GET /employees.json
   def index
-    @employees = Employee.all
+    if params[:group].present?
+      @employees = Employee.where(group: params[:group])
+    else
+      @employees = Employee.all
+    end
     render json: { message: 'Success', data: @employees.as_json(only: [:id, :custom_id, :name, :gender, :price, :group]) }, status: :ok
   end
+    
 
   # GET /employees/1
   # GET /employees/1.json
@@ -57,5 +62,3 @@ class EmployeesController < ApplicationController
     end
   end
 end
-
-
